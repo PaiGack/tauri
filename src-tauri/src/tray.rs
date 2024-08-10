@@ -1,12 +1,15 @@
 use tauri::{
-    AppHandle, CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu,
-    SystemTrayMenuItem,
+    api::notification::Notification, AppHandle, CustomMenuItem, Manager, SystemTray,
+    SystemTrayEvent, SystemTrayMenu, SystemTrayMenuItem,
 };
 
 pub fn create_system_tray() -> SystemTray {
+    let notify = CustomMenuItem::new("notify".to_string(), "Notify");
     let quit = CustomMenuItem::new("quit".to_string(), "Quit");
     let hide = CustomMenuItem::new("hide".to_string(), "Hide");
     let tray_menu = SystemTrayMenu::new()
+        .add_item(notify)
+        .add_native_item(SystemTrayMenuItem::Separator)
         .add_item(hide)
         .add_native_item(SystemTrayMenuItem::Separator)
         .add_item(quit);
@@ -72,6 +75,13 @@ pub fn handle_system_tray_event(app: &AppHandle, event: SystemTrayEvent) {
                     set_hide_title(app, true);
                     window.show().unwrap();
                 }
+            }
+            "notify" => {
+                Notification::new(app.config().tauri.bundle.identifier.as_str())
+                    .title("Tauri Notification")
+                    .body("This is a test notification")
+                    .notify(&app.app_handle())
+                    .unwrap();
             }
             _ => {}
         },
