@@ -12,6 +12,15 @@ pub fn create_system_tray() -> SystemTray {
     SystemTray::new().with_menu(tray_menu)
 }
 
+pub fn set_hide_title(app: &AppHandle, hide: bool) {
+    let item_handle: tauri::SystemTrayMenuItemHandle = app.tray_handle().get_item("hide");
+    if hide {
+        item_handle.set_title("Hide").unwrap();
+    } else {
+        item_handle.set_title("Show").unwrap();
+    }
+}
+
 pub fn handle_system_tray_event(app: &AppHandle, event: SystemTrayEvent) {
     match event {
         SystemTrayEvent::LeftClick {
@@ -40,13 +49,26 @@ pub fn handle_system_tray_event(app: &AppHandle, event: SystemTrayEvent) {
                 std::process::exit(0);
             }
             "hide" => {
-                let item_handle = app.tray_handle().get_item(&id);
-                let window = app.get_window("main").unwrap();
+                let window_option = app.get_window("main");
+                if window_option.is_none() {
+                    let window = tauri::WindowBuilder::new(
+                        app,
+                        "main",
+                        tauri::WindowUrl::App("index.html".into()),
+                    )
+                    .build()
+                    .expect("failed to build window");
+                    window.show().unwrap();
+                    set_hide_title(app, true);
+                    return;
+                }
+
+                let window = window_option.unwrap();
                 if window.is_visible().unwrap() {
-                    item_handle.set_title("Show").unwrap();
+                    set_hide_title(app, false);
                     window.hide().unwrap();
                 } else {
-                    item_handle.set_title("Hide").unwrap();
+                    set_hide_title(app, true);
                     window.show().unwrap();
                 }
             }

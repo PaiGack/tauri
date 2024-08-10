@@ -16,9 +16,10 @@ fn main() {
         .invoke_handler(tauri::generate_handler![greet])
         .build(tauri::generate_context!())
         .expect("error while running tauri application")
-        .run(|_app_handle, event| match event {
+        .run(|app, event| match event {
             tauri::RunEvent::ExitRequested { api, .. } => {
                 api.prevent_exit();
+                tray::set_hide_title(app, false);
             }
             _ => {}
         });
