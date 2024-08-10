@@ -14,6 +14,12 @@ fn main() {
         .system_tray(tray::create_system_tray())
         .on_system_tray_event(|app, event| tray::handle_system_tray_event(app, event))
         .invoke_handler(tauri::generate_handler![greet])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while running tauri application")
+        .run(|_app_handle, event| match event {
+            tauri::RunEvent::ExitRequested { api, .. } => {
+                api.prevent_exit();
+            }
+            _ => {}
+        });
 }
